@@ -1,0 +1,210 @@
+Java + Spring REST API — AI-Driven Development Exercise
+Objective
+Develop a RESTful API using Java + Spring Framework to manage Clients and
+their associated Documents, implementing full CRUD operations.
+This exercise should be completed using an AI-driven development approach.
+You are encouraged to use AI coding agents throughout the development lifecycle,
+preferably using:
+OpenCode → Ollama → Qwen
+The goal is not simply to generate code with AI, but to use AI agents as part of the
+software engineering process: planning, implementation, testing, debugging, code
+review, and iterative improvement.
+Requirements
+1. Java + Spring API
+Create a Java + Spring REST API supporting full CRUD operations:
+ 
+ 
+ 
+ 
+POST — Create a Client
+GET — Retrieve Client(s)
+PUT — Update a Client
+DELETE — Delete a Client
+Follow REST conventions when designing endpoints, HTTP status codes, and
+request/response payloads.
+2. Client Entity
+The Client entity must contain at least:
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Id
+FirstName
+LastName
+TaxIdentifier
+Email
+PhoneNumber
+Documents — one-to-many relationship
+3. Document Entity
+The Document entity must contain at least: 
+ 
+ 
+ 
+Id
+Number
+Description
+ExpirationDate
+A Client may have multiple Documents.
+4. Database
+Use an H2 in-memory database. Another database may be used if preferred.
+The implementation must:
+ 
+ 
+ 
+Persist Clients and their Documents within a single transaction,
+guaranteeing atomicity.
+Automatically create/manage the required database schema, or provide
+the necessary database migration/schema scripts.
+You may use mechanisms such as JPA/Hibernate schema generation,
+Liquibase, or equivalent configuration.
+5. Build Tool
+Use either:
+ 
+ 
+Maven, or
+Gradle
+The project should be buildable and executable using the selected build tool.
+6. Testing
+Implement automated tests covering at least the happy path of every API
+endpoint.
+Tests should be executable through the selected build tool.
+Additional tests covering validation, error handling, transactional behavior, or edge
+cases are encouraged.
+7. APIs
+At minimum, implement:
+ 
+ 
+ 
+ 
+ 
+POST /clients
+GET /clients
+GET /clients/{id}
+PUT /clients/{id}
+DELETE /clients/{id}Also create a Login API that can be used for authentication if JWT support is
+implemented.
+The exact URI structure may differ if there is a clear and consistent REST API
+design.
+AI-Driven Development
+You are expected to use AI-assisted/agentic development as part of this
+exercise.
+The preferred setup is:
+OpenCode → Ollama → Qwen
+Other AI-assisted development tools may be used, but preference should be given
+to a local agentic workflow where the AI agent can inspect the project, modify
+files, run builds/tests, analyze failures, and iteratively improve the
+implementation.
+Suggested Agent Workflow
+Use the AI agent iteratively rather than asking it to generate the entire project in a
+single prompt.
+A suggested workflow is:
+1. Ask the agent to analyze the requirements.
+2. Ask it to propose an implementation plan and architecture before writing
+code.
+3. Break the implementation into small, verifiable tasks.
+4. Let the agent implement tasks incrementally.
+5. Ask the agent to build and run the project.
+6. Ask it to create and execute the required automated tests.
+7. Let the agent investigate and fix compilation or test failures.
+8. Ask the agent to perform a code review of its own implementation.
+9. Review the proposed changes yourself and challenge questionable
+decisions.
+10. Iterate until the requirements are satisfied and all tests pass.
+AI-generated code should not be accepted blindly. You remain responsible for
+understanding, validating, and explaining the submitted solution.
+Nice to Have — Optional EnhancementsThe following are optional but may be implemented to improve the solution.
+API Documentation
+Document the REST API using Swagger / OpenAPI.
+Docker
+Provide a Dockerfile and instructions for building and running the service in a
+container.
+JWT Authentication
+Implement JWT-based authentication:
+ 
+ 
+ 
+Provide a sign-in/login endpoint.
+Generate a JWT token after successful authentication.
+Secure the Client APIs using the generated token.
+Additional Engineering Improvements
+You may also consider:
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Input validation
+Global exception handling
+DTOs instead of exposing persistence entities directly
+Mapping between DTOs and entities
+Appropriate HTTP status codes
+Structured error responses
+Integration tests
+Transactional tests
+Logging
+Pagination
+Code quality/static analysis tools
+Deliverables
+Submit the complete project containing:
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+API source code.
+Automated tests.
+Build configuration (pom.xml or Gradle files).
+Database configuration and/or migration scripts.
+Instructions for building and running the project.
+Any additional configuration or supporting files.
+Dockerfile, if Docker support is implemented.AI Development Evidence
+Also include a short AI_DEVELOPMENT.md file describing how AI was used during
+development.
+It should contain:
+ 
+ 
+ 
+ 
+ 
+ 
+AI tools used.
+Model(s) used.
+Examples of important prompts/instructions given to the agent.
+A short description of how the agent contributed to planning,
+implementation, testing, debugging, or review.
+At least one example where you accepted, modified, or rejected an AI-
+generated suggestion and why.
+A short reflection on the strengths and limitations of using AI for this
+exercise.
+You do not need to provide the complete AI conversation history.
+Evaluation Considerations
+The solution may be discussed during a technical review.
+Be prepared to:
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Explain the architecture and project structure.
+Explain the Client–Document relationship.
+Explain how transaction atomicity is guaranteed.
+Explain the REST API design.
+Explain and modify parts of the implementation.
+Run and explain the automated tests.
+Discuss decisions proposed by the AI agent.
+Identify potential problems or improvements in AI-generated code.
+The use of AI is encouraged; understanding the resulting software is required.
