@@ -54,4 +54,10 @@ public class Document {
         this.description = description;
         this.expirationDate = expirationDate;
     }
+
+    public void updateDetails(String number, String description, LocalDate expirationDate) {
+        this.number = number;
+        this.description = description;
+        this.expirationDate = expirationDate;
+    }
 }

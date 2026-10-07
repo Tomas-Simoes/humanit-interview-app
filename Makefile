@@ -1,13 +1,19 @@
 APP_NAME=humanit-interview-app
 API_DIR=api
 
-.PHONY: run test build clean docker-build docker-run compile
+.PHONY: run test integration-test verify build clean docker-build docker-run compile
 
 run:
 	cd $(API_DIR) && mvn spring-boot:run
 
 test:
 	cd $(API_DIR) && mvn test
+
+integration-test:
+	cd $(API_DIR) && mvn verify
+
+verify:
+	cd $(API_DIR) && mvn verify
 
 compile:
 	cd $(API_DIR) && mvn compile

@@ -28,7 +28,7 @@ I created the initial Client and Document entities, the first Flyway migration, 
 
 I also asked about reducing Java boilerplate for getters, setters, and constructors. Based on that, I added Lombok to the project.
 
-# Controllers and Services
+# Client & Document Controllers and Services
 
 Since Spring Boot is not the framework I am most experienced with, I used AI throughout the implementation mainly as a learning and support tool. I used it to understand Spring Boot conventions, API design patterns, annotations, syntax, and common best practices. The implementation was built my me.
 
@@ -73,3 +73,88 @@ This often involves several rounds of discussion. The AI identifies an issue, I 
 
 I find this approach more effective than simply asking the AI to fix the code automatically. The goal is not only to correct the current implementation, but also to understand the reasoning behind each improvement so that I can avoid repeating the same mistakes in future parts of the project.
 
+After fixing everything, I just coppied the same pattern for the Documents layer, since it was basically the same features between Documents and Clients, I ask an AI to copy the exact pattern from clients to documents:
+
+"Check the existing Client layer and use it as the structural template to build a new Document layer.
+
+The Document layer should mirror the Client layer as closely as possible, including the same architecture, file organization, patterns, features, validation style, API structure, services, repositories, DTOs/types, hooks, UI patterns, tests, and error handling where applicable.
+
+Requirements:
+- First, analyze how the Client layer is implemented.
+- Identify every feature and responsibility the Client layer has.
+- Create the equivalent Document layer using the same conventions.
+- Replace Client-specific naming, fields, routes, and logic with Document-specific equivalents.
+- Keep the implementation consistent with the existing codebase.
+- Do not introduce unrelated refactors or new architectural patterns.
+- Ensure imports, exports, routes, and registrations are fully wired.
+
+Before editing, briefly summarize the Client layer structure you found and your implementation plan. After editing, provide a concise summary of changed files and verification steps."
+
+# Errors
+
+The next phase was building the error layer. I wanted a clean and uncomplicated way to handle errors consistently across the whole application, without spreading `try/catch` blocks.
+
+I asked AI about common Spring Boot error-handling patterns and we compared a few options
+
+The approach that made the most sense was to use a global handler with `@RestControllerAdvice`. The service layer can throw application errors, and the error layer is responsible for translating those errors into proper HTTP responses.
+
+The final result is an error layer where:
+
+- services describe what went wrong by throwing `ApplicationException`
+- `ErrorCode` identifies the type of application error
+- `GlobalExceptionHandler` converts those errors into consistent HTTP responses
+- controllers stay focused on request and response flow
+
+# Testing
+
+In my previous software development experience, I had not written many automated tests, mostly because the projects were not being built with a production-ready mindset. Because of that, I had to research testing strategies and use AI to understand what should be tested, where it should be tested, and how to avoid writing tests that were either too shallow or unnecessarily duplicated.
+
+At first, the test suite started to feel confusing. Some behaviours appeared to overlap between different test classes. For example, duplicate client data could be tested at the repository level, the service level, and the API level and it felt redundant for me, but after discussing the architecture with AI I arrived at a concent
+
+The final testing strategy was organized by application layer:
+
+- `ClientRepositoryIT` focuses only on persistence behaviour. It verifies database and JPA concerns such as unique constraints, entity relationships, and custom queries like the client summary `documentCount`.
+- `ClientServiceIT` focuses on business behaviour. It tests the real service, mapper, repository, and database working together, without going through HTTP. 
+- `ClientApiIT` focuses on the external API contract. It verifies that real HTTP requests return the correct status codes,response bodies etc...
+
+One AI-generated suggestion I rejected happened during the testing phase. Initially, the AI suggested writing several mock-based unit tests for the service layer using Mockito. For example, the suggested test looked like this:
+@ExtendWith(MockitoExtension.class)
+class ClientServiceTest {
+    @Mock
+    ClientRepository clientRepository;
+    @Mock
+    ClientMapper clientMapper;
+    @InjectMocks
+    ClientService clientService;
+
+    @Test
+    void createClient_savesClientWhenEmailAndTaxIdentifierAreUnique() {
+        var request = new CreateClientRequest(
+                "Ana", "Silva", "TAX-1", "ana@example.com", "910000000");
+
+        var client = new Client(
+                "Ana", "Silva", "TAX-1", "ana@example.com", "910000000");
+
+        var response = new ClientResponse(
+                1L, "Ana", "Silva", "TAX-1", "ana@example.com", "910000000");
+
+        when(clientRepository.existsByEmail("ana@example.com")).thenReturn(false);
+        when(clientRepository.existsByTaxIdentifier("TAX-1")).thenReturn(false);
+        when(clientMapper.toEntity(request)).thenReturn(client);
+        when(clientRepository.save(client)).thenReturn(client);
+        when(clientMapper.toResponse(client)).thenReturn(response);
+
+        ClientResponse result = clientService.createClient(request);
+
+        assertThat(result).isEqualTo(response);
+        verify(clientRepository).save(client);
+    }
+}
+
+After reviewing this approach, I decided not to use it as the main testing strategy. Although mock-based unit tests can be useful in some cases, this specific test felt weak for this project. Most of the behaviour was being defined inside the test itself. The repository was mocked, the mapper was mocked, and the returned response was also mocked. Because of that, the test was not proving that the client was actually persisted, that the mapper worked correctly, or that the database constraints were valid. It mainly proved that Mockito returned the values that were configured inside the test.
+
+Instead, I chose to use higher-fidelity integration tests.
+
+After integrating the basic tests for the service, repository, and API layers, I reviewed the test coverage with AI assistance. That review identified several additional scenarios that were not covered by the initial test suite.
+
+I then asked the AI to help integrate the remaining tests suggested by the review. After that, I personally reviewed the generated tests and removed or adjusted the ones that felt redundant. 

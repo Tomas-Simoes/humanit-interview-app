@@ -1,6 +1,11 @@
 package humanit.client;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -8,11 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 import humanit.client.dto.ClientResponse;
 import humanit.client.dto.ClientSummaryResponse;
 import humanit.client.dto.CreateClientRequest;
-
-/*
-TODO
-    * define explicit throw errors
-*/
+import humanit.client.dto.UpdateClientRequest;
+import humanit.error.ApplicationException;
+import humanit.error.ErrorCode;
 
 @Service
 public class ClientService {
@@ -24,15 +27,18 @@ public class ClientService {
         this.clientMapper = clientMapper;
     }
 
-    // TODO catch DataIntegrityViolationException on GlobalExceptionHandler
     @Transactional
     public ClientResponse createClient(CreateClientRequest request) {
         if (clientRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("Email already exists.");
+            throw new ApplicationException(
+                    ErrorCode.CLIENT_EMAIL_EXISTS,
+                    "A client with this email already exists.");
         }
 
         if (clientRepository.existsByTaxIdentifier(request.taxIdentifier())) {
-            throw new IllegalArgumentException("Tax identifier already exists");
+            throw new ApplicationException(
+                    ErrorCode.CLIENT_TAX_IDENTIFIER_EXISTS,
+                    "A client with this tax identifier already exists.");
         }
 
         Client client = clientMapper.toEntity(request);
@@ -43,8 +49,30 @@ public class ClientService {
 
     @Transactional(readOnly = true)
     public ClientResponse getClient(Long id) {
-        Client client = clientRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Client not found"));
+        Client client = clientRepository.findByIdWithDocuments(id)
+                .orElseThrow(() -> clientNotFoundException(id));
+
+        return clientMapper.toResponse(client);
+    }
+
+    @Transactional
+    public ClientResponse updateClient(Long id, UpdateClientRequest request) {
+        Client client = clientRepository.findByIdWithDocuments(id)
+                .orElseThrow(() -> clientNotFoundException(id));
+
+        if (clientRepository.existsByEmailAndIdNot(request.email(), id)) {
+            throw new ApplicationException(
+                    ErrorCode.CLIENT_EMAIL_EXISTS,
+                    "A client with this email already exists.");
+        }
+
+        if (clientRepository.existsByTaxIdentifierAndIdNot(request.taxIdentifier(), id)) {
+            throw new ApplicationException(
+                    ErrorCode.CLIENT_TAX_IDENTIFIER_EXISTS,
+                    "A client with this tax identifier already exists.");
+        }
+
+        clientMapper.updateEntity(client, request);
 
         return clientMapper.toResponse(client);
     }
@@ -52,7 +80,7 @@ public class ClientService {
     @Transactional
     public void deleteClient(Long id) {
         Client client = clientRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Client not found"));
+                .orElseThrow(() -> clientNotFoundException(id));
 
         clientRepository.delete(client);
     }
@@ -62,4 +90,32 @@ public class ClientService {
         return clientRepository.findClientSummaries(pageable);
     }
 
+    @Transactional(readOnly = true)
+    public Page<ClientResponse> getClientsWithDocuments(Pageable pageable) {
+        Page<Client> clientPage = clientRepository.findAll(pageable);
+        List<Long> clientIds = clientPage.getContent().stream()
+                .map(Client::getId)
+                .toList();
+
+        if (clientIds.isEmpty()) {
+            return new PageImpl<>(List.of(), pageable, clientPage.getTotalElements());
+        }
+
+        Map<Long, Client> clientsWithDocuments = clientRepository.findAllByIdWithDocuments(clientIds)
+                .stream()
+                .collect(Collectors.toMap(Client::getId, client -> client));
+
+        List<ClientResponse> responses = clientIds.stream()
+                .map(clientsWithDocuments::get)
+                .map(clientMapper::toResponse)
+                .toList();
+
+        return new PageImpl<>(responses, pageable, clientPage.getTotalElements());
+    }
+
+    private ApplicationException clientNotFoundException(Long id) {
+        return new ApplicationException(
+                ErrorCode.CLIENT_NOT_FOUND,
+                "Client %d was not found.".formatted(id));
+    }
 }
