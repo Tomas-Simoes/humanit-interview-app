@@ -1,11 +1,13 @@
 package humanit.client;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import humanit.client.dto.ClientResponse;
 import humanit.client.dto.CreateClientRequest;
 import humanit.client.dto.UpdateClientRequest;
 import humanit.document.Document;
+import humanit.document.dto.CreateDocumentRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -26,6 +28,27 @@ class ClientMapperTest {
         assertThat(client.getTaxIdentifier()).isEqualTo("TAX-1");
         assertThat(client.getEmail()).isEqualTo("ana@example.com");
         assertThat(client.getPhoneNumber()).isEqualTo("910000000");
+        assertThat(client.getDocuments()).isEmpty();
+    }
+
+    @Test
+    void toEntity_mapsCreateClientRequestDocumentsToClientDocuments() {
+        var request = new CreateClientRequest(
+                "Ana",
+                "Silva",
+                "TAX-1",
+                "ana@example.com",
+                "910000000",
+                List.of(new CreateDocumentRequest("DOC-1", "Passport", LocalDate.of(2030, 1, 1))));
+
+        Client client = mapper.toEntity(request);
+
+        assertThat(client.getDocuments()).hasSize(1);
+        Document document = client.getDocuments().getFirst();
+        assertThat(document.getNumber()).isEqualTo("DOC-1");
+        assertThat(document.getDescription()).isEqualTo("Passport");
+        assertThat(document.getExpirationDate()).isEqualTo(LocalDate.of(2030, 1, 1));
+        assertThat(document.getClient()).isSameAs(client);
     }
 
     @Test

@@ -363,6 +363,22 @@ class DocumentApiIT {
                                 "CLIENT_NOT_FOUND");
         }
 
+        @Test
+        void listDocumentsWithNonPositiveClientIdReturns400() {
+                var response = rest.getForEntity(
+                                "/api/v1/clients/0/documents",
+                                String.class);
+
+                assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+                JsonNode problem = assertProblem(
+                                response.getBody(),
+                                HttpStatus.BAD_REQUEST,
+                                "/problems/validation-failed",
+                                "Validation failed",
+                                "VALIDATION_FAILED");
+                assertValidationError(problem, "clientId");
+        }
+
         private Long createClient(String taxIdentifier, String email) {
                 var response = rest.postForEntity(
                                 "/api/v1/clients",

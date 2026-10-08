@@ -3,6 +3,9 @@ package humanit.client;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
+import java.time.LocalDate;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -11,6 +14,8 @@ import org.springframework.test.context.jdbc.Sql;
 
 import humanit.client.dto.CreateClientRequest;
 import humanit.client.dto.UpdateClientRequest;
+import humanit.document.DocumentRepository;
+import humanit.document.dto.CreateDocumentRequest;
 import humanit.error.ApplicationException;
 import humanit.error.ErrorCode;
 
@@ -26,6 +31,9 @@ class ClientServiceIT {
     @Autowired
     ClientRepository clientRepository;
 
+    @Autowired
+    DocumentRepository documentRepository;
+
     @Test
     void createClientPersistsClient() {
         var response = clientService.createClient(clientRequest(
@@ -36,6 +44,48 @@ class ClientServiceIT {
         Client saved = clientRepository.findById(response.id()).orElseThrow();
         assertThat(saved.getEmail()).isEqualTo("ana@example.com");
         assertThat(saved.getTaxIdentifier()).isEqualTo("TAX-1");
+    }
+
+    @Test
+    void createClientPersistsDocumentsWithClient() {
+        var response = clientService.createClient(new CreateClientRequest(
+                "Ana",
+                "Silva",
+                "TAX-1",
+                "ana@example.com",
+                "910000000",
+                List.of(
+                        documentRequest("DOC-1", "Passport", LocalDate.of(2030, 1, 1)),
+                        documentRequest("DOC-2", "Identity card", LocalDate.of(2031, 2, 2)))));
+
+        assertThat(response.id()).isNotNull();
+        assertThat(response.documents())
+                .extracting(document -> document.number())
+                .containsExactly("DOC-1", "DOC-2");
+        assertThat(response.documents())
+                .extracting(document -> document.clientId())
+                .containsOnly(response.id());
+        assertThat(documentRepository.findByClientId(response.id())).hasSize(2);
+    }
+
+    @Test
+    void createClientRejectsDuplicateDocumentNumbersAndRollsBackClient() {
+        var request = new CreateClientRequest(
+                "Ana",
+                "Silva",
+                "TAX-1",
+                "ana@example.com",
+                "910000000",
+                List.of(
+                        documentRequest("DOC-1", "Passport", LocalDate.of(2030, 1, 1)),
+                        documentRequest("DOC-1", "Identity card", LocalDate.of(2031, 2, 2))));
+
+        assertThatExceptionOfType(ApplicationException.class)
+                .isThrownBy(() -> clientService.createClient(request))
+                .satisfies(e -> assertThat(e.errorCode()).isEqualTo(ErrorCode.DOCUMENT_NUMBER_EXISTS));
+
+        assertThat(clientRepository.findAll()).isEmpty();
+        assertThat(documentRepository.findAll()).isEmpty();
     }
 
     @Test
@@ -191,5 +241,9 @@ class ClientServiceIT {
             String email,
             String phoneNumber) {
         return new UpdateClientRequest(firstName, lastName, taxIdentifier, email, phoneNumber);
+    }
+
+    private CreateDocumentRequest documentRequest(String number, String description, LocalDate expirationDate) {
+        return new CreateDocumentRequest(number, description, expirationDate);
     }
 }

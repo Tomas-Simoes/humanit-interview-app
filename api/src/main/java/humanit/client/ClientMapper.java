@@ -7,17 +7,27 @@ import org.springframework.stereotype.Component;
 import humanit.client.dto.ClientResponse;
 import humanit.client.dto.CreateClientRequest;
 import humanit.client.dto.UpdateClientRequest;
+import humanit.document.Document;
 import humanit.document.dto.DocumentResponse;
 
 @Component
 public class ClientMapper {
     public Client toEntity(CreateClientRequest request) {
-        return new Client(
+        Client client = new Client(
                 request.firstName(),
                 request.lastName(),
                 request.taxIdentifier(),
                 request.email(),
                 request.phoneNumber());
+
+        request.documents().stream()
+                .map(document -> new Document(
+                        document.number(),
+                        document.description(),
+                        document.expirationDate()))
+                .forEach(client::addDocument);
+
+        return client;
     }
 
     public ClientResponse toResponse(Client client) {

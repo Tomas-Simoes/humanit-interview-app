@@ -1,7 +1,9 @@
 package humanit.client;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -14,6 +16,7 @@ import humanit.client.dto.ClientResponse;
 import humanit.client.dto.ClientSummaryResponse;
 import humanit.client.dto.CreateClientRequest;
 import humanit.client.dto.UpdateClientRequest;
+import humanit.document.dto.CreateDocumentRequest;
 import humanit.error.ApplicationException;
 import humanit.error.ErrorCode;
 
@@ -40,6 +43,8 @@ public class ClientService {
                     ErrorCode.CLIENT_TAX_IDENTIFIER_EXISTS,
                     "A client with this tax identifier already exists.");
         }
+
+        rejectDuplicateDocumentNumbers(request.documents());
 
         Client client = clientMapper.toEntity(request);
         Client savedClient = clientRepository.save(client);
@@ -117,5 +122,17 @@ public class ClientService {
         return new ApplicationException(
                 ErrorCode.CLIENT_NOT_FOUND,
                 "Client %d was not found.".formatted(id));
+    }
+
+    private void rejectDuplicateDocumentNumbers(List<CreateDocumentRequest> documents) {
+        Set<String> numbers = new HashSet<>();
+        for (CreateDocumentRequest document : documents) {
+            if (!numbers.add(document.number())) {
+                throw new ApplicationException(
+                        ErrorCode.DOCUMENT_NUMBER_EXISTS,
+                        "A document with number %s appears more than once in the create client request."
+                                .formatted(document.number()));
+            }
+        }
     }
 }

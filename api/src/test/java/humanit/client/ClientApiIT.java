@@ -7,6 +7,7 @@ import static humanit.helper.AuthTestSupport.authenticate;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -59,6 +60,60 @@ class ClientApiIT {
                                 .endsWith("/api/v1/clients/" + response.getBody().id());
                 assertThat(response.getBody().id()).isNotNull();
                 assertThat(response.getBody().email()).isEqualTo("ana@example.com");
+        }
+
+        @Test
+        void createClientWithDocumentsReturns201AndPersistsDocuments() {
+                var request = new CreateClientRequest(
+                                "Ana",
+                                "Silva",
+                                "TAX-1",
+                                "ana@example.com",
+                                "910000000",
+                                List.of(new CreateDocumentRequest(
+                                                "DOC-1",
+                                                "Passport",
+                                                LocalDate.of(2030, 1, 1))));
+
+                var response = rest.postForEntity(
+                                "/api/v1/clients",
+                                request,
+                                ClientResponse.class);
+
+                assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+                assertThat(response.getBody()).isNotNull();
+                assertThat(response.getBody().documents()).hasSize(1);
+                assertThat(response.getBody().documents().getFirst().id()).isNotNull();
+                assertThat(response.getBody().documents().getFirst().number()).isEqualTo("DOC-1");
+                assertThat(response.getBody().documents().getFirst().clientId()).isEqualTo(response.getBody().id());
+        }
+
+        @Test
+        void createClientWithInvalidDocumentReturns400() {
+                var request = new CreateClientRequest(
+                                "Ana",
+                                "Silva",
+                                "TAX-1",
+                                "ana@example.com",
+                                "910000000",
+                                List.of(new CreateDocumentRequest(
+                                                "",
+                                                "Passport",
+                                                LocalDate.of(2030, 1, 1))));
+
+                var response = rest.postForEntity(
+                                "/api/v1/clients",
+                                request,
+                                String.class);
+
+                assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+                JsonNode problem = assertProblem(
+                                response.getBody(),
+                                HttpStatus.BAD_REQUEST,
+                                "/problems/validation-failed",
+                                "Validation failed",
+                                "VALIDATION_FAILED");
+                assertValidationError(problem, "documents[0].number");
         }
 
         @Test
@@ -216,6 +271,37 @@ class ClientApiIT {
         }
 
         @Test
+        void getClientWithNonNumericIdReturns400() {
+                var response = rest.getForEntity(
+                                "/api/v1/clients/not-a-number",
+                                String.class);
+
+                assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+                assertProblem(
+                                response.getBody(),
+                                HttpStatus.BAD_REQUEST,
+                                "/problems/malformed-request",
+                                "Malformed request",
+                                "MALFORMED_REQUEST");
+        }
+
+        @Test
+        void getClientWithNonPositiveIdReturns400() {
+                var response = rest.getForEntity(
+                                "/api/v1/clients/-1",
+                                String.class);
+
+                assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+                JsonNode problem = assertProblem(
+                                response.getBody(),
+                                HttpStatus.BAD_REQUEST,
+                                "/problems/validation-failed",
+                                "Validation failed",
+                                "VALIDATION_FAILED");
+                assertValidationError(problem, "id");
+        }
+
+        @Test
         void updateClientReturns200AndUpdatedBody() {
                 ClientResponse created = createClient(validClientRequest());
                 var update = clientUpdateRequest(
@@ -366,9 +452,30 @@ class ClientApiIT {
                 assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
                 JsonNode body = parseJson(response.getBody());
                 assertThat(body.path("content")).hasSize(1);
+                assertThat(body.path("includeDocuments").asBoolean()).isFalse();
+                assertThat(body.path("page").asInt()).isZero();
+                assertThat(body.path("size").asInt()).isEqualTo(20);
+                assertThat(body.path("numberOfElements").asInt()).isEqualTo(1);
+                assertThat(body.path("totalElements").asLong()).isEqualTo(1);
+                assertThat(body.path("totalPages").asInt()).isEqualTo(1);
                 assertThat(body.path("content").get(0).path("email").asText()).isEqualTo("ana@example.com");
                 assertThat(body.path("content").get(0).path("documentCount").asLong()).isZero();
                 assertThat(body.path("content").get(0).has("documents")).isFalse();
+        }
+
+        @Test
+        void listClientsWithInvalidIncludeDocumentsQueryParamReturns400() {
+                var response = rest.getForEntity(
+                                "/api/v1/clients?includeDocuments=not-a-boolean",
+                                String.class);
+
+                assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+                assertProblem(
+                                response.getBody(),
+                                HttpStatus.BAD_REQUEST,
+                                "/problems/malformed-request",
+                                "Malformed request",
+                                "MALFORMED_REQUEST");
         }
 
         @Test
@@ -386,6 +493,10 @@ class ClientApiIT {
                 assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
                 JsonNode body = parseJson(response.getBody());
                 assertThat(body.path("content")).hasSize(1);
+                assertThat(body.path("includeDocuments").asBoolean()).isTrue();
+                assertThat(body.path("page").asInt()).isZero();
+                assertThat(body.path("size").asInt()).isEqualTo(1);
+                assertThat(body.path("numberOfElements").asInt()).isEqualTo(1);
                 assertThat(body.path("totalElements").asLong()).isEqualTo(2);
                 assertThat(body.path("totalPages").asInt()).isEqualTo(2);
 

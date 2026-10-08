@@ -1,6 +1,7 @@
 package humanit.auth;
 
 import static humanit.helper.ApiAssertions.assertProblem;
+import static humanit.helper.ApiAssertions.assertValidationError;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 import humanit.auth.dto.LoginRequest;
 import humanit.auth.dto.LoginResponse;
@@ -33,6 +36,23 @@ class AuthApiIT {
         assertThat(response.getBody().id()).isNotNull();
         assertThat(response.getBody().email()).isEqualTo("ana.user@example.com");
         assertThat(response.getBody().role()).isEqualTo("USER");
+    }
+
+    @Test
+    void registerWithInvalidEmailReturns400() {
+        var response = rest.postForEntity(
+                "/api/v1/auth/register",
+                new RegisterRequest("bad-email", "password"),
+                String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        JsonNode problem = assertProblem(
+                response.getBody(),
+                HttpStatus.BAD_REQUEST,
+                "/problems/validation-failed",
+                "Validation failed",
+                "VALIDATION_FAILED");
+        assertValidationError(problem, "email");
     }
 
     @Test
@@ -67,6 +87,23 @@ class AuthApiIT {
         assertThat(response.getBody().accessToken()).isNotBlank();
         assertThat(response.getBody().tokenType()).isEqualTo("Bearer");
         assertThat(response.getBody().expiresIn()).isEqualTo(900);
+    }
+
+    @Test
+    void loginWithBlankUsernameReturns400() {
+        var response = rest.postForEntity(
+                "/api/v1/auth/login",
+                new LoginRequest("", "password"),
+                String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        JsonNode problem = assertProblem(
+                response.getBody(),
+                HttpStatus.BAD_REQUEST,
+                "/problems/validation-failed",
+                "Validation failed",
+                "VALIDATION_FAILED");
+        assertValidationError(problem, "username");
     }
 
     @Test

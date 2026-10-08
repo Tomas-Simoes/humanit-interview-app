@@ -1,13 +1,22 @@
 package humanit.error;
 
 import java.net.URI;
+import java.util.Comparator;
+import java.util.List;
+
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -23,6 +32,55 @@ public class GlobalExceptionHandler {
         return problemResponse(
                 ErrorCode.DATA_INTEGRITY_VIOLATION,
                 "Request conflicts with existing data.");
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ProblemDetail> handleMethodArgumentNotValid(MethodArgumentNotValidException e) {
+        ProblemDetail problem = problem(
+                ErrorCode.VALIDATION_FAILED,
+                "Request validation failed.");
+
+        List<ValidationError> errors = e.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .sorted(Comparator.comparing(FieldError::getField))
+                .map(error -> new ValidationError(error.getField(), error.getDefaultMessage()))
+                .toList();
+
+        problem.setProperty("errors", errors);
+
+        return ResponseEntity.badRequest().body(problem);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ProblemDetail> handleHttpMessageNotReadable(HttpMessageNotReadableException e) {
+        return problemResponse(
+                ErrorCode.MALFORMED_REQUEST,
+                "Request body is missing or malformed.");
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ProblemDetail> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException e) {
+        return problemResponse(
+                ErrorCode.MALFORMED_REQUEST,
+                "Request parameter or path variable has an invalid value.");
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ProblemDetail> handleConstraintViolation(ConstraintViolationException e) {
+        ProblemDetail problem = problem(
+                ErrorCode.VALIDATION_FAILED,
+                "Request validation failed.");
+
+        List<ValidationError> errors = e.getConstraintViolations()
+                .stream()
+                .sorted(Comparator.comparing(violation -> violation.getPropertyPath().toString()))
+                .map(violation -> new ValidationError(fieldName(violation), violation.getMessage()))
+                .toList();
+
+        problem.setProperty("errors", errors);
+
+        return ResponseEntity.badRequest().body(problem);
     }
 
     private ResponseEntity<ProblemDetail> problemResponse(ErrorCode code, String detail) {
@@ -90,6 +148,15 @@ public class GlobalExceptionHandler {
         };
     }
 
+    private String fieldName(ConstraintViolation<?> violation) {
+        String path = violation.getPropertyPath().toString();
+        int lastSeparator = path.lastIndexOf('.');
+        return lastSeparator >= 0 ? path.substring(lastSeparator + 1) : path;
+    }
+
     private record ProblemSpec(HttpStatus status, URI type, String title) {
+    }
+
+    private record ValidationError(String field, String message) {
     }
 }
