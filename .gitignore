@@ -6,3 +6,8 @@
 
 .env
 .env.*
+!.env.example
+
+api/logs/
+.attach_pid*
+**/.attach_pid*
