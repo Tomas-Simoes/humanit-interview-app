@@ -1,123 +1,73 @@
-AI Tools used: Codex 5.5 (tried using OpenCode Qwen however it was too slow on my machine and couldn't make a proper free Agent to work, so prefered to go with free Codex version)
+# AI Development
 
-Started by setting up the project asking the AI on which technologies I needed to install and how to:
+## AI Tools Used
 
-"_project especifications attached_ Given this project struture and especifications, what do I need to setup/install for it? Give me concrete linux fedora commands."
+Codex AI coding agent was the primary AI-assisted development tool used throughout the project.
 
-Since Java is not my main programming language, asked about the conventions of API building and structuring
+I initially attempted to use my preferred local workflow, OpenCode → Ollama → Qwen, but the model's performance on my machine was too slow for efficient development.
 
-"What are the Java and REST convenctions for API building and structuring? Include folder structure and code conventions"
+## Models Used
 
-After analyzing it, started planning and setting up the project:
+The primary model used through Codex was GPT-5.5.
 
-# First Planning
+## AI Usage
 
-The input is available at AI/prompts/planning.md
+In my day-to-day development workflow, I primarily use AI as an assistant for information gathering and code assistance.
 
-After analyzing the requirements and setting up the project structure, I started by implementing the database layer. I chose to begin there because the Client and Document models define the core domain of the API, and having the persistence layer ready early makes it easier to build and test the API endpoints.
+For this particular project, although I had previous experience building APIs with Node.js frameworks, I was not as familiar with API development in Java. However, with the help of AI, I was able to quickly understand the Java-specific concepts and apply knowledge from my previous experience.
 
-I initially considered a workflow similar to Prisma, where the data model is defined first and migrations are generated from it. With AI assistance, I researched the common approaches in Java/Spring and decided to use JPA entities together with Flyway migrations and Hibernate schema validation.
+When it comes to writing code, I generally prefer to build the initial architecture and core implementation myself, with some AI assistance for boilerplate code. This allows the AI to understand my coding style, architectural decisions, and preferred project structure. Once that foundation is established, I use AI to extend the application while maintaining consistency with my existing implementation.
 
-The final approach was:
+I followed this approach when developing the Clients and Documents modules. I first implemented the Clients module myself, defining its architecture and structure. Afterwards, I instructed the AI to implement the Documents module by following the same architectural patterns and conventions. Naturally, this did not eliminate the need for code reviews, but accelerated the development process.
 
-- JPA entities define the Java domain model and relationships.
-- Flyway migrations define and version the database schema explicitly.
-- Hibernate runs with `ddl-auto=validate` to ensure the Java mappings match the database schema.
+Another important part of my AI-assisted workflow is code review and continuous improvement. I tend to be very detail-oriented when developing software, and I always aim to build systems that are well-structured, maintainable, and reliable. For this reason, I frequently ask AI to perform comprehensive code reviews and generate reports evaluating the current state of the application. These reviews help me identify potential issues, architectural weaknesses, areas for improvement, and mistakes I might have overlooked.
 
-I created the initial Client and Document entities, the first Flyway migration, and the corresponding Spring Data JPA repositories. AI assistance was useful for checking JPA relationship syntax, migration structure, and common best practices around bidirectional relationships.
+Rather than simply asking AI to fix the issues it identifies, I try to understand why something is considered a problem and how the proposed solution improves the codebase. This often involves multiple rounds of discussion, where I question the AI's suggestions, evaluate the reasoning behind them, and decide whether they are appropriate for the project.
 
-I also asked about reducing Java boilerplate for getters, setters, and constructors. Based on that, I added Lombok to the project.
+With that in mind, the following section highlights some of the most important prompts, discussions, and decisions made during the development of this application.
 
-# Client & Document Controllers and Services
+## Important Prompts and Instructions
 
-Since Spring Boot is not the framework I am most experienced with, I used AI throughout the implementation mainly as a learning and support tool. I used it to understand Spring Boot conventions, API design patterns, annotations, syntax, and common best practices. The implementation was built my me.
+### Planning and Architecture
 
-The Client layer was divided into the following components:
+Since this project involved a relatively simple API with only two entities and limited business logic, designing its architecture was fairly straightforward.
 
-Client entity
-Client DTOs
-ClientController
-ClientService
-ClientRepository
-ClientMapper
+Nevertheless, as the project specifically emphasized AI-assisted planning, I decided to use AI during this stage. The prompt is available at `AI/prompts/planning.md`.
 
-The implementation itself was relatively straightforward. Whenever I encountered something specific to Spring Boot or JPA that I was unfamiliar with, I used AI to understand the concept and then applied it to the project.
+The result was useful in establishing a general understanding of the project's requirements and how to structure the application from the early stages. In particular, I took inspiration from the suggested package organization, potential API endpoints, and overall architectural approach.
 
-Before moving on to the Document layer, I decided to perform a dedicated review of the Client implementation. The goal was to verify that the architecture I had chosen was appropriate and to identify potential problems or better practices before repeating the same patterns in the Document layer.
+### Client Layer Review
 
-For larger tasks like code reviews, I prefer to first use an AI agent to create a detailed prompt. I find this useful because it helps define clear review criteria and reduces the chance of overlooking important aspects of the implementation.
+After implementing the initial Client layer, I asked AI to review its design before applying the same architectural patterns to the Documents module. The prompt used for this review is available at `AI/prompts/clientLayerReview.md`.
 
-I gave the agent the following input:
+The main objective of this review was to evaluate whether my architectural decisions were appropriate, identify potential weaknesses, and verify that the implementation followed established software engineering principles and common best practices.
 
-"I'm making a REST API to manage Client and Client Documents.
-I already created the Client layer with DTOs to create a client, a ClientController, ClientService, ClientMapper and ClientRepository.
+When conducting this type of review, I follow an iterative approach. I read the AI's feedback, try to understand the reasoning behind each criticism, and evaluate whether the identified issue is genuinely relevant to the application.
 
-Before moving on to Documents, I want you to build me an optimized prompt to check this layer and identify potential problems and other best practices I could use.
+This process sometimes involves multiple rounds of discussion, where I challenge the AI's suggestions, ask for further explanations, and explore alternative solutions. My goal is to reach an implementation that I understand, consider well-designed, and feel confident maintaining.
 
-I essentially want to know whether this is a good way of building this type of software and whether anything should be changed.
-
-Known problems:
-
-Client DTOs still do not contain the Document property. I will add it after creating the Document layer.
-I am still using IllegalArgumentException. I will later replace these with explicit/domain-specific exceptions.
-
-Project context: [project requirements]"
-
-The generated prompt instructed another agent to review the implementation from several perspectives.
-
-The output is available at AI/prompts/clientLayerReview.md
-
-During the code review process, I follow an iterative approach for each issue identified by the AI. Rather than immediately accepting the suggested change, I first try to understand what the problem is, why it is considered a problem, and what impact it could have on the application.
-
-This often involves several rounds of discussion. The AI identifies an issue, I ask for the reasoning behind it, and then continue asking follow-up questions until I fully understand the underlying concept and the recommended solution.
-
-I find this approach more effective than simply asking the AI to fix the code automatically. The goal is not only to correct the current implementation, but also to understand the reasoning behind each improvement so that I can avoid repeating the same mistakes in future parts of the project.
-
-After fixing everything, I just coppied the same pattern for the Documents layer, since it was basically the same features between Documents and Clients, I ask an AI to copy the exact pattern from clients to documents:
-
-"Check the existing Client layer and use it as the structural template to build a new Document layer.
-
-The Document layer should mirror the Client layer as closely as possible, including the same architecture, file organization, patterns, features, validation style, API structure, services, repositories, DTOs/types, hooks, UI patterns, tests, and error handling where applicable.
-
-Requirements:
-- First, analyze how the Client layer is implemented.
-- Identify every feature and responsibility the Client layer has.
-- Create the equivalent Document layer using the same conventions.
-- Replace Client-specific naming, fields, routes, and logic with Document-specific equivalents.
-- Keep the implementation consistent with the existing codebase.
-- Do not introduce unrelated refactors or new architectural patterns.
-- Ensure imports, exports, routes, and registrations are fully wired.
-
-Before editing, briefly summarize the Client layer structure you found and your implementation plan. After editing, provide a concise summary of changed files and verification steps."
-
-# Errors
-
-The next phase was building the error layer. I wanted a clean and uncomplicated way to handle errors consistently across the whole application, without spreading `try/catch` blocks.
-
-I asked AI about common Spring Boot error-handling patterns and we compared a few options
-
-The approach that made the most sense was to use a global handler with `@RestControllerAdvice`. The service layer can throw application errors, and the error layer is responsible for translating those errors into proper HTTP responses.
-
-The final result is an error layer where:
-
-- services describe what went wrong by throwing `ApplicationException`
-- `ErrorCode` identifies the type of application error
-- `GlobalExceptionHandler` converts those errors into consistent HTTP responses
-- controllers stay focused on request and response flow
-
-# Testing
+### Testing
 
 In my previous software development experience, I had not written many automated tests, mostly because the projects were not being built with a production-ready mindset. Because of that, I had to research testing strategies and use AI to understand what should be tested, where it should be tested, and how to avoid writing tests that were either too shallow or unnecessarily duplicated.
 
-At first, the test suite started to feel confusing. Some behaviours appeared to overlap between different test classes. For example, duplicate client data could be tested at the repository level, the service level, and the API level and it felt redundant for me, but after discussing the architecture with AI I arrived at a concent
+For this project, I considered higher-fidelity integration tests more valuable, as they allowed me to validate the interaction between real application components.
 
-The final testing strategy was organized by application layer:
+After implementing the initial integration tests for the repository, service, and API layers, I used AI assistance to review the overall test coverage. This review helped identify additional scenarios and edge cases that had not been covered by the original test suite.
 
-- `ClientRepositoryIT` focuses only on persistence behaviour. It verifies database and JPA concerns such as unique constraints, entity relationships, and custom queries like the client summary `documentCount`.
-- `ClientServiceIT` focuses on business behaviour. It tests the real service, mapper, repository, and database working together, without going through HTTP. 
-- `ClientApiIT` focuses on the external API contract. It verifies that real HTTP requests return the correct status codes,response bodies etc...
+I then asked the AI to help implement the remaining relevant tests suggested during the review. Once they were generated, I personally examined the implementations, evaluated their purpose, and removed or adjusted tests that I considered redundant or unnecessary.
 
-One AI-generated suggestion I rejected happened during the testing phase. Initially, the AI suggested writing several mock-based unit tests for the service layer using Mockito. For example, the suggested test looked like this:
+### Final Application Review
+
+Towards the end of development, I also used AI to perform several comprehensive reviews of the entire application, available at `AI/prompts/finalReview.md`
+
+I repeated this process around three or four times. After each review, I analyzed the reported issues, evaluated the suggested improvements, and implemented the changes I considered necessary. I would then request another review to check whether the previous issues had been resolved and identify any remaining weaknesses.
+
+This iterative process helped me progressively improve the application, verify its compliance with the project requirements, and bring its architecture, error handling, and overall code quality closer to production-ready standards.
+
+## AI-generated suggestion
+
+One AI-generated suggestion that I decided not to follow came during the testing phase was that AI suggested writing several mock-based unit tests for the service layer using Mockito. For example, one of the suggested tests looked like this:
+
 @ExtendWith(MockitoExtension.class)
 class ClientServiceTest {
     @Mock
@@ -151,10 +101,22 @@ class ClientServiceTest {
     }
 }
 
-After reviewing this approach, I decided not to use it as the main testing strategy. Although mock-based unit tests can be useful in some cases, this specific test felt weak for this project. Most of the behaviour was being defined inside the test itself. The repository was mocked, the mapper was mocked, and the returned response was also mocked. Because of that, the test was not proving that the client was actually persisted, that the mapper worked correctly, or that the database constraints were valid. It mainly proved that Mockito returned the values that were configured inside the test.
+After reviewing this approach, I decided not to adopt it. Although mock-based unit tests can be valuable in certain scenarios, I felt that this particular test provided limited confidence in the actual behaviour of the application.
 
-Instead, I chose to use higher-fidelity integration tests.
+Most of the dependencies were mocked, including the repository and mapper, and the expected response was predefined within the test itself. As a result, the test did not verify whether the client was actually persisted, whether the mapper behaved correctly, or whether the database constraints were enforced.
 
-After integrating the basic tests for the service, repository, and API layers, I reviewed the test coverage with AI assistance. That review identified several additional scenarios that were not covered by the initial test suite.
+One AI suggestion I accepted was the overall application architecture. The AI recommended separating responsibilities into different layers, with controllers handling HTTP requests, services containing business logic, repositories managing database access, and mappers converting between entities and DTOs.
 
-I then asked the AI to help integrate the remaining tests suggested by the review. After that, I personally reviewed the generated tests and removed or adjusted the ones that felt redundant. 
+This was already close to the structure I had in mind, so I agreed with the suggestion and followed this approach for both Clients and Documents.
+
+One AI suggestion I modified was the exception handling architecture. Initially, the AI suggested creating individual exception handlers for almost every possible error. Personally, I felt this was adding unnecessary complexity and boilerplate without much benefit.
+
+Instead, I decided to centralize application-specific errors through a single `ApplicationException` handler, using an `ErrorCode` enum and a switch-based approach to determine the appropriate response. I kept dedicated handlers only for cases that genuinely required special treatment, such as validation errors, malformed requests, or framework exceptions.
+
+## Strengths and Limitations of AI
+
+The main strength of using AI during this exercise was its ability to accelerate development and learning. It helped me adapt my previous API development experience to Java, understand unfamiliar concepts, explore different strategies, and identify potential improvements through iterative code reviews.
+
+However, its suggestions were not always appropriate for the project's scope, sometimes introducing unnecessary complexity or solutions that did not provide meaningful benefits. 
+
+Overall, I found AI most valuable when treated as a development assistant while questioning its recommendations, understanding the reasoning behind them, and making the final technical decisions myself.

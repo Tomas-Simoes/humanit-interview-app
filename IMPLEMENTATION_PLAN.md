@@ -330,7 +330,7 @@ Request:
 {
   "firstName": "Ana",
   "lastName": "Silva",
-  "taxIdentifier": "PT123456789",
+  "taxIdentifier": "123456789",
   "email": "ana.silva@example.com",
   "phoneNumber": "+351912345678",
   "documents": [
@@ -376,7 +376,7 @@ Response `200 OK`:
       "id": 1,
       "firstName": "Ana",
       "lastName": "Silva",
-      "taxIdentifier": "PT123456789",
+      "taxIdentifier": "123456789",
       "email": "ana.silva@example.com",
       "phoneNumber": "+351912345678",
       "documentCount": 1
@@ -420,7 +420,7 @@ Request:
 {
   "firstName": "Ana",
   "lastName": "Santos",
-  "taxIdentifier": "PT123456789",
+  "taxIdentifier": "123456789",
   "email": "ana.santos@example.com",
   "phoneNumber": "+351912345678",
   "documents": [
