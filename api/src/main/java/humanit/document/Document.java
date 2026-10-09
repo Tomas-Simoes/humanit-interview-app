@@ -21,43 +21,44 @@ import lombok.Setter;
 
 @Entity
 @Table(
-        name = "documents",
-        uniqueConstraints = {
-                @UniqueConstraint(name = "uk_documents_client_number", columnNames = {"client_id", "number"})
-        }
-)
+    name = "documents",
+    uniqueConstraints = {
+      @UniqueConstraint(
+          name = "uk_documents_client_number",
+          columnNames = {"client_id", "number"})
+    })
 @Access(AccessType.FIELD)
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Document {
-    @Id
-    @Setter(AccessLevel.NONE)
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @Setter(AccessLevel.NONE)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false, length = 100)
-    private String number;
+  @Column(nullable = false, length = 100)
+  private String number;
 
-    @Column(length = 500)
-    private String description;
+  @Column(length = 500)
+  private String description;
 
-    @Column(name = "expiration_date", nullable = false)
-    private LocalDate expirationDate;
+  @Column(name = "expiration_date", nullable = false)
+  private LocalDate expirationDate;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "client_id", nullable = false)
-    private Client client;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "client_id", nullable = false)
+  private Client client;
 
-    public Document(String number, String description, LocalDate expirationDate) {
-        this.number = number;
-        this.description = description;
-        this.expirationDate = expirationDate;
-    }
+  public Document(String number, String description, LocalDate expirationDate) {
+    this.number = number;
+    this.description = description;
+    this.expirationDate = expirationDate;
+  }
 
-    public void updateDetails(String number, String description, LocalDate expirationDate) {
-        this.number = number;
-        this.description = description;
-        this.expirationDate = expirationDate;
-    }
+  public void updateDetails(String number, String description, LocalDate expirationDate) {
+    this.number = number;
+    this.description = description;
+    this.expirationDate = expirationDate;
+  }
 }

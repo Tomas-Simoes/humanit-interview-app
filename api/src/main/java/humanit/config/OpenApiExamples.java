@@ -1,7 +1,8 @@
 package humanit.config;
 
 public final class OpenApiExamples {
-    public static final String VALIDATION_PROBLEM = """
+  public static final String VALIDATION_PROBLEM =
+      """
             {
               "type": "/problems/validation-failed",
               "title": "Validation failed",
@@ -17,7 +18,8 @@ public final class OpenApiExamples {
             }
             """;
 
-    public static final String CLIENT_NOT_FOUND_PROBLEM = """
+  public static final String CLIENT_NOT_FOUND_PROBLEM =
+      """
             {
               "type": "/problems/client-not-found",
               "title": "Client not found",
@@ -27,7 +29,8 @@ public final class OpenApiExamples {
             }
             """;
 
-    public static final String DOCUMENT_NOT_FOUND_PROBLEM = """
+  public static final String DOCUMENT_NOT_FOUND_PROBLEM =
+      """
             {
               "type": "/problems/document-not-found",
               "title": "Document not found",
@@ -37,7 +40,8 @@ public final class OpenApiExamples {
             }
             """;
 
-    public static final String CLIENT_CONFLICT_PROBLEM = """
+  public static final String CLIENT_CONFLICT_PROBLEM =
+      """
             {
               "type": "/problems/client-email-already-exists",
               "title": "Client email already exists",
@@ -47,7 +51,8 @@ public final class OpenApiExamples {
             }
             """;
 
-    public static final String DOCUMENT_CONFLICT_PROBLEM = """
+  public static final String DOCUMENT_CONFLICT_PROBLEM =
+      """
             {
               "type": "/problems/document-number-already-exists",
               "title": "Document number already exists",
@@ -57,7 +62,8 @@ public final class OpenApiExamples {
             }
             """;
 
-    public static final String INVALID_CREDENTIALS_PROBLEM = """
+  public static final String INVALID_CREDENTIALS_PROBLEM =
+      """
             {
               "type": "/problems/invalid-credentials",
               "title": "Invalid credentials",
@@ -67,7 +73,8 @@ public final class OpenApiExamples {
             }
             """;
 
-    public static final String USER_EMAIL_CONFLICT_PROBLEM = """
+  public static final String USER_EMAIL_CONFLICT_PROBLEM =
+      """
             {
               "type": "/problems/user-email-already-exists",
               "title": "User email already exists",
@@ -77,6 +84,5 @@ public final class OpenApiExamples {
             }
             """;
 
-    private OpenApiExamples() {
-    }
+  private OpenApiExamples() {}
 }

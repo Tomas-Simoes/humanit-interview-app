@@ -1,33 +1,33 @@
 package humanit.client;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import humanit.document.Document;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 class ClientTest {
-    @Test
-    void addDocument_setsBothSidesOfRelationship() {
-        Client client = new Client("Ana", "Silva", "TAX-1", "ana@example.com", "910000000");
+  @Test
+  void addDocument_setsBothSidesOfRelationship() {
+    Client client = new Client("Ana", "Silva", "123456789", "ana@example.com", "+351910000000");
 
-        Document document = new Document("DOC-1", "Passport", LocalDate.of(2030, 1, 1));
+    Document document = new Document("DOC-1", "Passport", LocalDate.of(2030, 1, 1));
 
-        client.addDocument(document);
+    client.addDocument(document);
 
-        assertThat(client.getDocuments()).containsExactly(document);
-        assertThat(document.getClient()).isSameAs(client);
-    }
+    assertThat(client.getDocuments()).containsExactly(document);
+    assertThat(document.getClient()).isSameAs(client);
+  }
 
-    @Test
-    void removeDocument_clearsBothSidesOfRelationship() {
-        Client client = new Client("Ana", "Silva", "TAX-1", "ana@example.com", "910000000");
-        Document document = new Document("DOC-1", "Passport", LocalDate.of(2030, 1, 1));
+  @Test
+  void removeDocument_clearsBothSidesOfRelationship() {
+    Client client = new Client("Ana", "Silva", "123456789", "ana@example.com", "+351910000000");
+    Document document = new Document("DOC-1", "Passport", LocalDate.of(2030, 1, 1));
 
-        client.addDocument(document);
-        client.removeDocument(document);
+    client.addDocument(document);
+    client.removeDocument(document);
 
-        assertThat(client.getDocuments()).doesNotContain(document);
-        assertThat(document.getClient()).isNull();
-    }
+    assertThat(client.getDocuments()).doesNotContain(document);
+    assertThat(document.getClient()).isNull();
+  }
 }

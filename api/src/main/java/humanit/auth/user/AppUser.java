@@ -17,26 +17,26 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AppUser {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false, unique = true, length = 255)
-    private String email;
+  @Column(nullable = false, unique = true, length = 255)
+  private String email;
 
-    @Column(name = "password_hash", nullable = false, length = 255)
-    private String passwordHash;
+  @Column(name = "password_hash", nullable = false, length = 255)
+  private String passwordHash;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
-    private UserRole role;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 50)
+  private UserRole role;
 
-    @Column(nullable = false)
-    private boolean enabled = true;
+  @Column(nullable = false)
+  private boolean enabled = true;
 
-    public AppUser(String email, String passwordHash, UserRole role) {
-        this.email = email;
-        this.passwordHash = passwordHash;
-        this.role = role;
-    }
+  public AppUser(String email, String passwordHash, UserRole role) {
+    this.email = email;
+    this.passwordHash = passwordHash;
+    this.role = role;
+  }
 }
